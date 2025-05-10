@@ -35,35 +35,42 @@ M.typecheck_current_buffer = function() -- Reset all diagnostics for our custom 
 
 	-- `mypy` exits with 0 on success and greater zero on error
 	if exit_code ~= 0 then
+		local diagnostics = {}
 		for _, line in ipairs(output) do
 			-- parse line and col from the first line of the output
-			print("mypy.nvim: the line is:", line)
 			local line_from, col_from, line_to, col_to, severity, message =
 				string.match(line, "(%d+):(%d+):(%d+):(%d+): (%a+): (.+)$")
-			print("mypy.nvim: extracted:", line_from, col_from, line_to, col_to, severity, message)
-			if line_from == nil or line_to == nil or col_from == nil or col_to == nil or severity == nil or message == nil then
+			if
+				line_from == nil
+				or line_to == nil
+				or col_from == nil
+				or col_to == nil
+				or severity == nil
+				or message == nil
+			then
 				goto continue
 			else
-				print("good stuff")
-				-- actually set the diagnostic
 				-- vim diagnostic severities:
 				-- ERROR = 1,
 				-- WARN = 2,
 				-- INFO = 3,
 				-- HINT = 4,
-				local mypy_severities = { error = 1, note = 4 }
-				vim.diagnostic.set(M.namespace, 0, {
-					{
-						lnum = tonumber(line_from) - 1,
-						col = tonumber(col_from) - 1,
-						end_lnum = tonumber(line_to) - 1,
-						end_col = tonumber(col_to) - 1,
-						message = message,
-						severity = mypy_severities[severity],
-					},
+				local mypy_severities = {}
+				mypy_severities["error"] = 1
+				mypy_severities["note"] = 4
+				table.insert(diagnostics, {
+					lnum = tonumber(line_from) - 1,
+					col = tonumber(col_from) - 1,
+					end_lnum = tonumber(line_to) - 1,
+					end_col = tonumber(col_to) - 1,
+					message = "mypy: " .. message,
+					severity = mypy_severities[severity],
 				})
 			end
 			::continue::
+		end
+		if #diagnostics > 0 then
+			vim.diagnostic.set(M.namespace, 0, diagnostics)
 		end
 	end
 end
