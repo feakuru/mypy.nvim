@@ -10,3 +10,21 @@ I certainly think so. So this is what this plugin does:
 * runs `mypy` on your open Python files
 * displays the errors from `mypy` as diagnostic warnings and notes as notes
 * allows you to toggle/enable/disable itself with `:MypyToggle`, `:MypyEnable`, `:MypyDisable`
+
+## Installation
+
+For Lazy:
+```
+return {
+  {
+    "feakuru/mypy.nvim",
+    config = function()
+      require('mypy').setup()
+    end,
+  },
+}
+```
+
+## Contributing
+
+Please feel free to submit helpful PRs or open issues.
