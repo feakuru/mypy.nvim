@@ -2,17 +2,34 @@ M = {}
 
 M.setup = function()
 	M.namespace = vim.api.nvim_create_namespace("MypyNvim")
+	M.enabled = true
 
 	vim.api.nvim_create_autocmd({ "BufWritePost", "BufEnter" }, {
 		group = vim.api.nvim_create_augroup("MypyNvim", { clear = true }),
 		pattern = { "*.py", "*.pyi" },
 		callback = M.typecheck_current_buffer,
 	})
+
+	vim.api.nvim_create_user_command("MypyEnable", function(_)
+		M.enabled = true
+		M.typecheck_current_buffer()
+	end, { desc = "Enable Mypy diagnostics" })
+	vim.api.nvim_create_user_command("MypyDisable", function(_)
+		M.enabled = false
+		M.typecheck_current_buffer()
+	end, { desc = "Disable Mypy diagnostics" })
+	vim.api.nvim_create_user_command("MypyToggle", function(_)
+		M.enabled = not M.enabled
+		M.typecheck_current_buffer()
+	end, { desc = "Toggle Mypy diagnostics" })
 end
 
 M.typecheck_current_buffer = function()
 	-- 0 stands for "current buffer"
 	vim.diagnostic.reset(M.namespace, 0)
+	if not M.enabled then
+		return
+	end
 	local buf_path = vim.api.nvim_buf_get_name(0)
 	local cmd = "mypy --show-error-end --follow-imports=silent " .. buf_path
 
