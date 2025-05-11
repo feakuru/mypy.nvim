@@ -14,15 +14,29 @@ I certainly think so. So this is what this plugin does:
 ## Installation
 
 For Lazy:
-```
+```lua
 return {
   {
-    "feakuru/mypy.nvim",
+    'feakuru/mypy.nvim',
     config = function()
       require('mypy').setup()
     end,
   },
 }
+```
+
+If you would like to pass additional arguments to our invocation of `mypy` (by default, it is called with `--show-error-end --follow-imports=silent`), pass a config to the `setup` call:
+
+```lua
+return {
+  {
+    'feakuru/mypy.nvim',
+    config = function()
+      require('mypy').setup {extra_args = {'--check-untyped-defs', '--verbose'}}
+    end,
+  },
+}
+
 ```
 
 ## Contributing

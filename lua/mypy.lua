@@ -1,8 +1,19 @@
-M = {}
+M = {
+	extra_args = "",
+}
 
-M.setup = function()
+---@class mypy.Config
+---@field extra_args string[]: The extra arguments to pass to mypy
+
+--- The setup function: creates autocommands, user commands and the diagnostic namespace.
+---@param config mypy.Config?
+M.setup = function(config)
+	config = config or {}
 	M.namespace = vim.api.nvim_create_namespace("MypyNvim")
 	M.enabled = true
+	if config.extra_args ~= nil and #config.extra_args > 0 then
+		M.extra_args = table.concat(config.extra_args, " ")
+	end
 
 	vim.api.nvim_create_autocmd({ "BufWritePost", "BufEnter" }, {
 		group = vim.api.nvim_create_augroup("MypyNvim", { clear = true }),
@@ -31,7 +42,7 @@ M.typecheck_current_buffer = function()
 		return
 	end
 	local buf_path = vim.api.nvim_buf_get_name(0)
-	local cmd = "mypy --show-error-end --follow-imports=silent " .. buf_path
+	local cmd = "mypy --show-error-end --follow-imports=silent " .. M.extra_args .. " " .. buf_path
 
 	local output = vim.fn.systemlist(cmd)
 	local exit_code = vim.v.shell_error
