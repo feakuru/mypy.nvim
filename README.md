@@ -26,7 +26,6 @@ return {
 ```
 
 You can pass a `config` to the `setup()` call to override some defaults:
-If you would like to , pass a config to the `setup` call:
 
 ```lua
 return {
