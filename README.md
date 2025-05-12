@@ -8,7 +8,7 @@ Wouldn't it make more sense to just use a separate process (and thus plugin) for
 
 I certainly think so. So this is what this plugin does:
 * runs `mypy` on your open Python files
-* displays the errors from `mypy` as diagnostic warnings and notes as notes
+* displays the errors from `mypy` as diagnostic warnings and notes as notes (or as diagnostics of custom severities you can provide)
 * allows you to toggle/enable/disable itself with `:MypyToggle`, `:MypyEnable`, `:MypyDisable`
 
 ## Installation
@@ -25,14 +25,22 @@ return {
 }
 ```
 
-If you would like to pass additional arguments to our invocation of `mypy` (by default, it is called with `--show-error-end --follow-imports=silent`), pass a config to the `setup` call:
+You can pass a `config` to the `setup()` call to override some defaults:
+If you would like to , pass a config to the `setup` call:
 
 ```lua
 return {
   {
     'feakuru/mypy.nvim',
     config = function()
-      require('mypy').setup {extra_args = {'--check-untyped-defs', '--verbose'}}
+      require('mypy').setup {
+        -- additional arguments to pass to invocations of `mypy`
+        -- by default, it is called with `--show-error-end --follow-imports=silent`
+        extra_args = {'--check-untyped-defs', '--verbose'},
+        -- override mypy diagnostic severities
+        -- the default is { error = vim.diagnostic.severity.WARN, note = vim.diagnostic.severity.HINT }
+        severities = { error = vim.diagnostic.severity.ERROR, note = vim.diagnostic.severity.INFO },
+      }
     end,
   },
 }

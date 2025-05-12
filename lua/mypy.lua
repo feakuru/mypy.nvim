@@ -1,9 +1,11 @@
 M = {
 	extra_args = "",
+	severities = { error = vim.diagnostic.severity.WARN, note = vim.diagnostic.severity.HINT },
 }
 
 ---@class mypy.Config
 ---@field extra_args string[]: The extra arguments to pass to mypy
+---@field severities {string: integer}: The relationship of mypy diagnostic type to a vim.diagnostic.severity.* value
 
 --- The setup function: creates autocommands, user commands and the diagnostic namespace.
 ---@param config mypy.Config?
@@ -13,6 +15,9 @@ M.setup = function(config)
 	M.enabled = true
 	if config.extra_args ~= nil and #config.extra_args > 0 then
 		M.extra_args = table.concat(config.extra_args, " ")
+	end
+	if config.severities ~= nil then
+		M.severities = config.severities
 	end
 
 	vim.api.nvim_create_autocmd({ "BufWritePost", "BufEnter" }, {
@@ -53,33 +58,22 @@ M.typecheck_current_buffer = function()
 			local line_from, col_from, line_to, col_to, severity, message =
 				string.match(line, "(%d+):(%d+):(%d+):(%d+): (%a+): (.+)$")
 			if
-				line_from == nil
-				or line_to == nil
-				or col_from == nil
-				or col_to == nil
-				or severity == nil
-				or message == nil
+				line_from ~= nil
+				and line_to ~= nil
+				and col_from ~= nil
+				and col_to ~= nil
+				and severity ~= nil
+				and message ~= nil
 			then
-				goto continue
-			else
-				-- vim diagnostic severities:
-				-- ERROR = 1,
-				-- WARN = 2,
-				-- INFO = 3,
-				-- HINT = 4,
-				local mypy_severities = {}
-				mypy_severities["error"] = 2
-				mypy_severities["note"] = 4
 				table.insert(diagnostics, {
 					lnum = tonumber(line_from) - 1,
 					col = tonumber(col_from) - 1,
 					end_lnum = tonumber(line_to) - 1,
 					end_col = tonumber(col_to) - 1,
 					message = "mypy: " .. message,
-					severity = mypy_severities[severity],
+					severity = M.severities[severity],
 				})
 			end
-			::continue::
 		end
 		if #diagnostics > 0 then
 			vim.diagnostic.set(M.namespace, 0, diagnostics)
