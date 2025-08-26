@@ -4,8 +4,8 @@ M = {
 }
 
 ---@class mypy.Config
----@field extra_args string[]: The extra arguments to pass to mypy
----@field severities {string: integer}: The relationship of mypy diagnostic type to a vim.diagnostic.severity.* value
+---@field extra_args? string[]: The extra arguments to pass to mypy
+---@field severities? {string: integer}: The relationship of mypy diagnostic type to a vim.diagnostic.severity.* value
 
 --- The setup function: creates autocommands, user commands and the diagnostic namespace.
 ---@param config mypy.Config?
