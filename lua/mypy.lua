@@ -42,36 +42,43 @@ end
 
 M.typecheck_current_buffer = function()
 	if not M.enabled then
-	  vim.diagnostic.reset(M.namespace, 0)
+		vim.diagnostic.reset(M.namespace, 0)
 		return
 	end
-  local buf_num = vim.api.nvim_get_current_buf()
+	local buf_num = vim.api.nvim_get_current_buf()
 	local buf_path = vim.api.nvim_buf_get_name(0)
 	local cmd_raw = "mypy --show-error-end --follow-imports=silent " .. M.extra_args .. " " .. buf_path
-  local cmd = {}
-  for w in string.gmatch(cmd_raw, "%S+") do
-    table.insert(cmd, w)
-  end
+	local cmd = {}
+	for w in string.gmatch(cmd_raw, "%S+") do
+		table.insert(cmd, w)
+	end
 
-  vim.system(cmd, {}, function( out ) do
-    if out.code ~= 0 then
-      local diagnostics = {}
-      for line_from, col_from, line_to, col_to, severity, message in string.gmatch(out.stdout, "(%d+):(%d+):(%d+):(%d+): (%a+): ([^\n]+)") do
-        table.insert(diagnostics, {
-          lnum = tonumber(line_from) - 1,
-          col = tonumber(col_from) - 1,
-          end_lnum = tonumber(line_to) - 1,
-          end_col = tonumber(col_to) - 1,
-          message = "mypy: " .. message,
-          severity = M.severities[severity],
-        })
-      end
-      vim.schedule(function() vim.diagnostic.set(M.namespace, buf_num, diagnostics) end)
-    else
-      vim.schedule(function() vim.diagnostic.reset(M.namespace, buf_num) end)
-    end
-  end
-end)
+	pcall(vim.system, cmd, {}, function(out)
+		do
+			if out.code ~= 0 then
+				local diagnostics = {}
+				for line_from, col_from, line_to, col_to, severity, message in
+					string.gmatch(out.stdout, "(%d+):(%d+):(%d+):(%d+): (%a+): ([^\n]+)")
+				do
+					table.insert(diagnostics, {
+						lnum = tonumber(line_from) - 1,
+						col = tonumber(col_from) - 1,
+						end_lnum = tonumber(line_to) - 1,
+						end_col = tonumber(col_to) - 1,
+						message = "mypy: " .. message,
+						severity = M.severities[severity],
+					})
+				end
+				vim.schedule(function()
+					vim.diagnostic.set(M.namespace, buf_num, diagnostics)
+				end)
+			else
+				vim.schedule(function()
+					vim.diagnostic.reset(M.namespace, buf_num)
+				end)
+			end
+		end
+	end)
 end
 
 return M
