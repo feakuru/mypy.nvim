@@ -40,11 +40,22 @@ M.setup = function(config)
 	end, { desc = "Toggle Mypy diagnostics" })
 end
 
+-- Store current job to prevent too many concurrent Mypy processes.
+-- nil means no job
+M.current_job = nil
+
 M.typecheck_current_buffer = function()
 	if not M.enabled then
 		vim.diagnostic.reset(M.namespace, 0)
 		return
 	end
+
+	-- Kill any running jobs before starting a new one.
+	if M.current_job then
+		M.current_job:kill(9)
+		M.current_job = nil
+	end
+
 	local buf_num = vim.api.nvim_get_current_buf()
 	local buf_path = vim.api.nvim_buf_get_name(0)
 	local cmd_raw = "mypy --show-error-end --follow-imports=silent " .. M.extra_args .. " " .. buf_path
@@ -53,7 +64,13 @@ M.typecheck_current_buffer = function()
 		table.insert(cmd, w)
 	end
 
-	pcall(vim.system, cmd, {}, function(out)
+	local job
+	local ok, job_result = pcall(vim.system, cmd, {}, function(out)
+		-- Mark previous job as finished.
+		if M.current_job ~= job then
+			return
+		end
+		M.current_job = nil
 		do
 			if out.code ~= 0 then
 				local diagnostics = {}
@@ -79,6 +96,11 @@ M.typecheck_current_buffer = function()
 			end
 		end
 	end)
+
+	if ok then
+		job = job_result
+		M.current_job = job
+	end
 end
 
 return M
